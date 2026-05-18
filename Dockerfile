@@ -11,7 +11,7 @@ ARG BINUTILS_VERSION
 RUN apt-get update && apt-get install -y --no-install-recommends \
         gcc g++ make flex bison texinfo \
         libgmp-dev libmpfr-dev libmpc-dev zlib1g-dev \
-        wget ca-certificates xz-utils \
+        wget ca-certificates xz-utils bzip2 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build

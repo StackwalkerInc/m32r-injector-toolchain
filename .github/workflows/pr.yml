@@ -26,5 +26,8 @@ jobs:
       - name: Smoke test — m32r-elf-gcc
         run: docker run --rm m32r-toolchain:pr m32r-elf-gcc --version
 
+      - name: Smoke test — m32r-elf-objdump
+        run: docker run --rm m32r-toolchain:pr m32r-elf-objdump --version
+
       - name: Smoke test — cmake
         run: docker run --rm m32r-toolchain:pr cmake --version
