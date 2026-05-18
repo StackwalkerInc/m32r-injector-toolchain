@@ -44,6 +44,7 @@ RUN wget -q "https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.t
         --prefix=/opt/m32r-elf \
         --enable-languages=c,c++ \
         --without-headers \
+        --with-newlib \
         --disable-shared \
         --disable-threads \
         --disable-nls \
