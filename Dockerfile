@@ -53,3 +53,19 @@ RUN wget -q "https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.t
     && make install \
     && cd /build \
     && rm -rf "gcc-${GCC_VERSION}" "gcc-${GCC_VERSION}.tar.xz" gcc-build
+
+# ── runner ───────────────────────────────────────────────────────────────────
+FROM ubuntu:${UBUNTU_VERSION} AS runner
+
+ARG GCC_VERSION
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        cmake \
+        libgmp10 libmpfr6 libmpc3 zlib1g \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /opt/m32r-elf /opt/m32r-elf
+
+ENV PATH="/opt/m32r-elf/bin:${PATH}"
+
+LABEL org.opencontainers.image.description="m32r-elf cross-compiler GCC ${GCC_VERSION} with CMake"
