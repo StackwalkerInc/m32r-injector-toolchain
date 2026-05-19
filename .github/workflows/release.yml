@@ -14,6 +14,10 @@ on:
         description: 'binutils version override (e.g. 2.44); leave blank to use Dockerfile default'
         required: false
         default: ''
+      codeinjector_version:
+        description: 'codeinjector release tag override (e.g. 0.0.1); leave blank to use Dockerfile default'
+        required: false
+        default: ''
 
 jobs:
   push:
@@ -57,3 +61,4 @@ jobs:
           build-args: |
             GCC_VERSION=${{ inputs.gcc_version || '16.1.0' }}
             BINUTILS_VERSION=${{ inputs.binutils_version || '2.44' }}
+            CODEINJECTOR_VERSION=${{ inputs.codeinjector_version || '0.0.1' }}

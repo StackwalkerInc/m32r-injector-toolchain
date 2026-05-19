@@ -1,6 +1,7 @@
 ARG UBUNTU_VERSION=24.04
 ARG GCC_VERSION=16.1.0
 ARG BINUTILS_VERSION=2.44
+ARG CODEINJECTOR_VERSION=0.0.1
 
 # ── builder ──────────────────────────────────────────────────────────────────
 FROM ubuntu:${UBUNTU_VERSION} AS builder
@@ -60,14 +61,20 @@ RUN wget -q "https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.t
 FROM ubuntu:${UBUNTU_VERSION} AS runner
 
 ARG GCC_VERSION
+ARG CODEINJECTOR_VERSION
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         cmake \
         libgmp10 libmpfr6 libmpc3 zlib1g \
+        python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /opt/m32r-elf /opt/m32r-elf
 
 ENV PATH="/opt/m32r-elf/bin:${PATH}"
+
+# wheel package version (0.1.0) differs from the GitHub release tag (CODEINJECTOR_VERSION)
+RUN pip3 install --no-cache-dir --break-system-packages \
+    "https://github.com/RcusStackwalker/codeinjector/releases/download/v${CODEINJECTOR_VERSION}/codeinjector-0.1.0-py3-none-manylinux_2_34_x86_64.whl"
 
 LABEL org.opencontainers.image.description="m32r-elf cross-compiler GCC ${GCC_VERSION} with CMake"

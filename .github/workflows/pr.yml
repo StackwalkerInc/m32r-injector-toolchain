@@ -31,3 +31,6 @@ jobs:
 
       - name: Smoke test — cmake
         run: docker run --rm m32r-toolchain:pr cmake --version
+
+      - name: Smoke test — codeinjector
+        run: docker run --rm m32r-toolchain:pr codeinjector --help
