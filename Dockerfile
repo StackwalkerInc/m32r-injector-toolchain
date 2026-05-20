@@ -1,7 +1,7 @@
 ARG UBUNTU_VERSION=24.04
 ARG GCC_VERSION=16.1.0
 ARG BINUTILS_VERSION=2.44
-ARG CODEINJECTOR_VERSION=0.0.1
+ARG CODEINJECTOR_VERSION=0.1.2
 
 # ── codeinjector builder ──────────────────────────────────────────────────────
 # Compiles the codeinjector binary from source for the target architecture.
