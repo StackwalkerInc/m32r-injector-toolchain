@@ -18,4 +18,4 @@ jobs:
       - uses: tomtom-international/commisery-action/bump@a34695e80d301291c6c5ef5642f2d06c8d5289a5 # v6.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          create-release: false
+          create-tag: true
