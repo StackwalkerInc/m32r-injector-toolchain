@@ -1,0 +1,21 @@
+name: Auto Tag
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+
+      - uses: tomtom-international/commisery-action/bump@a34695e80d301291c6c5ef5642f2d06c8d5289a5 # v6.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          create-release: false
