@@ -15,19 +15,41 @@ on:
         required: false
         default: ''
       codeinjector_version:
-        description: 'codeinjector release tag override (e.g. 0.0.1); leave blank to use Dockerfile default'
+        description: 'codeinjector release tag override (e.g. 0.1.2); leave blank to use Dockerfile default'
         required: false
         default: ''
 
 jobs:
-  push:
-    runs-on: ubuntu-latest
+  # Build each platform on its native runner. QEMU-emulating an arm64 GCC 16
+  # cross-toolchain on an amd64 runner took ~4 hours per release; native arm64
+  # runners bring this down to comparable wall time for both matrix legs and
+  # let them run in parallel. Each leg builds, smoke-tests locally, then
+  # pushes the image by digest only — manifest tags are applied in the
+  # `merge` job so a smoke-test failure on one platform aborts the release
+  # before any tag is moved.
+  build:
+    name: Build ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
     permissions:
       contents: read
       packages: write
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Prepare platform pair
+        id: prep
+        run: |
+          platform=${{ matrix.platform }}
+          echo "pair=${platform//\//-}" >> $GITHUB_OUTPUT
 
       - name: Extract ARG defaults from Dockerfile
         id: args
@@ -55,33 +77,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract image metadata
-        id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=raw,value=latest,enable=${{ github.ref_type == 'tag' }}
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      # Build single-arch for the runner first so we can smoke-test the image
-      # locally before publishing. Layers populate the buildx cache; the
-      # subsequent multi-arch push reuses them.
+      # Build locally first so the next step (smoke test) can run against the
+      # produced image. The subsequent push-by-digest build hits the same
+      # per-platform GHA cache and finishes in seconds.
       - name: Build (load locally for smoke test)
         uses: docker/build-push-action@v7
         with:
           context: .
-          platforms: linux/amd64
+          platforms: ${{ matrix.platform }}
           load: true
           tags: m32r-toolchain:smoke
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ steps.prep.outputs.pair }}
+          cache-to: type=gha,mode=max,scope=${{ steps.prep.outputs.pair }}
           build-args: |
             GCC_VERSION=${{ inputs.gcc_version || steps.args.outputs.gcc }}
             BINUTILS_VERSION=${{ inputs.binutils_version || steps.args.outputs.binutils }}
@@ -91,18 +101,78 @@ jobs:
       - name: Smoke test — codeinjector end-to-end
         run: docker run --rm -v "$PWD/tests/smoke:/smoke:ro" m32r-toolchain:smoke /smoke/run.sh
 
-      - name: Build and push (multi-arch)
+      - name: Push by digest
+        id: push
         uses: docker/build-push-action@v7
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          platforms: ${{ matrix.platform }}
+          outputs: type=image,name=ghcr.io/${{ github.repository }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ steps.prep.outputs.pair }}
+          cache-to: type=gha,mode=max,scope=${{ steps.prep.outputs.pair }}
           build-args: |
             GCC_VERSION=${{ inputs.gcc_version || steps.args.outputs.gcc }}
             BINUTILS_VERSION=${{ inputs.binutils_version || steps.args.outputs.binutils }}
             CODEINJECTOR_VERSION=${{ inputs.codeinjector_version || steps.args.outputs.codeinjector }}
             CODEINJECTOR_SHA=${{ steps.codeinjector_sha.outputs.sha }}
+
+      - name: Export digest to artifact
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.push.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ steps.prep.outputs.pair }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  # Combine the per-platform digests into a multi-arch manifest and tag it
+  # (semver + :latest). Runs only if every build leg's smoke test passed.
+  merge:
+    name: Create manifest
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable=${{ github.ref_type == 'tag' }}
+
+      - name: Create manifest list and push
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf 'ghcr.io/${{ github.repository }}@sha256:%s ' *)
+
+      - name: Inspect resulting image
+        run: docker buildx imagetools inspect ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.version }}
