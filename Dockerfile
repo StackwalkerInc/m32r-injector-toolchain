@@ -6,13 +6,28 @@ ARG CODEINJECTOR_VERSION=0.1.2
 # ── codeinjector builder ──────────────────────────────────────────────────────
 # Compiles the codeinjector binary from source for the target architecture.
 # Using cargo install avoids arch-specific wheel URLs.
+#
+# CODEINJECTOR_SHA pins the build to a specific commit, not a tag. This makes
+# the layer cache key bust correctly when the codeinjector version changes
+# (tags can be moved; SHAs cannot), and removes any chance of a moved tag
+# silently producing a stale binary. The workflow resolves
+# "v${CODEINJECTOR_VERSION}" to a SHA before building; SHA defaults empty
+# so a local `docker build` without --build-arg fails fast.
 FROM rust:slim-bookworm AS codeinjector-builder
 
 ARG CODEINJECTOR_VERSION
-RUN cargo install \
+ARG CODEINJECTOR_SHA=""
+RUN test -n "${CODEINJECTOR_SHA}" || { \
+        echo "ERROR: CODEINJECTOR_SHA build-arg is required"; \
+        echo "Resolve it with: git ls-remote https://github.com/RcusStackwalker/codeinjector.git refs/tags/v\${CODEINJECTOR_VERSION}"; \
+        exit 1; \
+    } \
+    && echo "Building codeinjector v${CODEINJECTOR_VERSION} @ ${CODEINJECTOR_SHA}" \
+    && cargo install \
         --git https://github.com/RcusStackwalker/codeinjector.git \
-        --tag "v${CODEINJECTOR_VERSION}" \
+        --rev "${CODEINJECTOR_SHA}" \
         --locked \
+        --force \
         --root /usr/local \
         codeinjector
 
