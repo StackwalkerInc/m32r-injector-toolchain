@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: write
+  actions: write   # to dispatch release.yml after bumping
 
 jobs:
   bump:
@@ -15,7 +16,27 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: tomtom-international/commisery-action/bump@a34695e80d301291c6c5ef5642f2d06c8d5289a5 # v6.0.0
+      - id: bump
+        uses: tomtom-international/commisery-action/bump@a34695e80d301291c6c5ef5642f2d06c8d5289a5 # v6.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           create-tag: true
+
+      # commisery-action pushes any new tag with GITHUB_TOKEN. Tag pushes made
+      # via GITHUB_TOKEN do NOT fire `push: tags: ['v*']` triggers (GitHub's
+      # workflow-recursion guard), so release.yml would silently skip the new
+      # tag — as happened with v1.1.0. Explicitly dispatch release.yml here.
+      # workflow_dispatch is one of the events excluded from the recursion
+      # guard, so this works with the default GITHUB_TOKEN.
+      - name: Dispatch release.yml for the new tag (if any)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch --tags --force
+          tag=$(git tag --points-at HEAD --sort=-creatordate | head -1)
+          if [ -z "$tag" ]; then
+            echo "No tag at HEAD — nothing to release."
+            exit 0
+          fi
+          echo "Dispatching release.yml for $tag"
+          gh workflow run release.yml --ref "$tag"
