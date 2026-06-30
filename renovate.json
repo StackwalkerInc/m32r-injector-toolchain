@@ -4,7 +4,9 @@
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": ["^Dockerfile$"],
+      "managerFilePatterns": [
+        "/^Dockerfile$/"
+      ],
       "matchStrings": ["ARG CODEINJECTOR_VERSION=(?<currentValue>[\\d.]+)"],
       "depNameTemplate": "StackwalkerInc/codeinjector",
       "datasourceTemplate": "github-releases",
