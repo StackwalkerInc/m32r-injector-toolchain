@@ -52,7 +52,7 @@ jobs:
           echo "pair=${platform//\//-}" >> $GITHUB_OUTPUT
 
       # Docker image refs must be lowercase. ${{ github.repository }} keeps
-      # original casing (e.g. "RcusStackwalker/..."), which breaks
+      # original casing (e.g. "StackwalkerInc/..."), which breaks
       # `outputs: type=image,name=ghcr.io/${{ github.repository }}` directly.
       # docker/metadata-action lowercases automatically; this step does the
       # same for the bits of the workflow that don't go through it.
@@ -71,7 +71,7 @@ jobs:
         id: codeinjector_sha
         run: |
           version="${{ inputs.codeinjector_version || steps.args.outputs.codeinjector }}"
-          sha=$(git ls-remote https://github.com/RcusStackwalker/codeinjector.git "refs/tags/v${version}" | cut -f1)
+          sha=$(git ls-remote https://github.com/StackwalkerInc/codeinjector.git "refs/tags/v${version}" | cut -f1)
           if [ -z "$sha" ]; then
             echo "ERROR: codeinjector tag v${version} not found"
             exit 1

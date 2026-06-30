@@ -22,7 +22,7 @@ jobs:
         id: codeinjector_sha
         run: |
           version="${{ steps.args.outputs.codeinjector }}"
-          sha=$(git ls-remote https://github.com/RcusStackwalker/codeinjector.git "refs/tags/v${version}" | cut -f1)
+          sha=$(git ls-remote https://github.com/StackwalkerInc/codeinjector.git "refs/tags/v${version}" | cut -f1)
           if [ -z "$sha" ]; then
             echo "ERROR: codeinjector tag v${version} not found"
             exit 1

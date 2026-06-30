@@ -19,12 +19,12 @@ ARG CODEINJECTOR_VERSION
 ARG CODEINJECTOR_SHA=""
 RUN test -n "${CODEINJECTOR_SHA}" || { \
         echo "ERROR: CODEINJECTOR_SHA build-arg is required"; \
-        echo "Resolve it with: git ls-remote https://github.com/RcusStackwalker/codeinjector.git refs/tags/v\${CODEINJECTOR_VERSION}"; \
+        echo "Resolve it with: git ls-remote https://github.com/StackwalkerInc/codeinjector.git refs/tags/v\${CODEINJECTOR_VERSION}"; \
         exit 1; \
     } \
     && echo "Building codeinjector v${CODEINJECTOR_VERSION} @ ${CODEINJECTOR_SHA}" \
     && cargo install \
-        --git https://github.com/RcusStackwalker/codeinjector.git \
+        --git https://github.com/StackwalkerInc/codeinjector.git \
         --rev "${CODEINJECTOR_SHA}" \
         --locked \
         --force \

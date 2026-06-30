@@ -2,9 +2,9 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Docker image providing a `m32r-elf` cross-compiler (GCC), CMake, and [codeinjector](https://github.com/RcusStackwalker/codeinjector) for bare-metal M32R development.
+Docker image providing a `m32r-elf` cross-compiler (GCC), CMake, and [codeinjector](https://github.com/StackwalkerInc/codeinjector) for bare-metal M32R development.
 
-Published to: `ghcr.io/rcusstackwalker/m32r-injector-toolchain`
+Published to: `ghcr.io/stackwalkerinc/m32r-injector-toolchain`
 
 ## Defaults
 
@@ -12,20 +12,20 @@ Published to: `ghcr.io/rcusstackwalker/m32r-injector-toolchain`
 |-----------------|---------|
 | GCC             | 16.1.0  |
 | binutils        | 2.44    |
-| codeinjector    | 0.0.1   |
+| codeinjector    | 0.1.2   |
 | Ubuntu          | 24.04   |
 
 ## Pull the image
 
 ```sh
-docker pull ghcr.io/rcusstackwalker/m32r-injector-toolchain:latest
+docker pull ghcr.io/stackwalkerinc/m32r-injector-toolchain:latest
 ```
 
 ## Use as a build environment
 
 ```sh
 docker run --rm -v "$PWD":/work -w /work \
-  ghcr.io/rcusstackwalker/m32r-injector-toolchain:latest \
+  ghcr.io/stackwalkerinc/m32r-injector-toolchain:latest \
   m32r-elf-gcc -o hello hello.c
 ```
 

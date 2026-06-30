@@ -7,7 +7,7 @@ CODEINJECTOR_VERSION ?= 0.1.2
 # Resolve the codeinjector tag to a SHA. Pinning the build to a SHA (not
 # a tag) prevents stale Docker layer caches from silently reusing a binary
 # built from an older state of the tag.
-CODEINJECTOR_SHA = $(shell git ls-remote https://github.com/RcusStackwalker/codeinjector.git refs/tags/v$(CODEINJECTOR_VERSION) | cut -f1)
+CODEINJECTOR_SHA = $(shell git ls-remote https://github.com/StackwalkerInc/codeinjector.git refs/tags/v$(CODEINJECTOR_VERSION) | cut -f1)
 
 BUILD_ARGS = \
 	--build-arg GCC_VERSION=$(GCC_VERSION) \
