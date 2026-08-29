@@ -12,7 +12,7 @@ Published to: `ghcr.io/stackwalkerinc/m32r-injector-toolchain`
 |-----------------|---------|
 | GCC             | 16.1.0  |
 | binutils        | 2.44    |
-| codeinjector    | 0.1.2   |
+| codeinjector    | 0.2.0   |
 | Ubuntu          | 24.04   |
 
 ## Pull the image
