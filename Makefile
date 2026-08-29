@@ -2,7 +2,7 @@ IMAGE                ?= m32r-toolchain
 GCC_VERSION          ?= 16.1.0
 BINUTILS_VERSION     ?= 2.44
 UBUNTU_VERSION       ?= 24.04
-CODEINJECTOR_VERSION ?= 0.1.2
+CODEINJECTOR_VERSION ?= 0.2.0
 
 # Resolve the codeinjector tag to a SHA. Pinning the build to a SHA (not
 # a tag) prevents stale Docker layer caches from silently reusing a binary
