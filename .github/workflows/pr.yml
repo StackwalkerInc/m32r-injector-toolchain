@@ -50,8 +50,14 @@ jobs:
       - name: Smoke test — cmake
         run: docker run --rm m32r-toolchain:pr cmake --version
 
-      - name: Smoke test — codeinjector --help
-        run: docker run --rm m32r-toolchain:pr codeinjector --help
+      # codeinjector is a positional-args CLI with no --help flag: any invalid
+      # invocation prints the usage banner and exits 1. Asserting on the banner
+      # keeps the "binary is installed and runnable" check while tolerating that
+      # exit status -- the pipeline's status is grep's, so a missing or broken
+      # binary (no banner on stdout/stderr) still fails the step.
+      - name: Smoke test — codeinjector usage
+        run: |
+          docker run --rm m32r-toolchain:pr codeinjector 2>&1 | grep -q 'Usage: codeinjector'
 
       - name: Smoke test — codeinjector end-to-end
         run: docker run --rm -v "$PWD/tests/smoke:/smoke:ro" m32r-toolchain:pr /smoke/run.sh
